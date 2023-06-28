@@ -14,21 +14,26 @@ const refs = {
 const HREF_PIX = 'https://pixabay.com/api/';
 const KEY_PIX = '37771567-c63b0fa1e82728e8a21c21132';
 let nomberPage = 0;
-refs.formEl.addEventListener('submit', onSearchImage);
-function onSearchImage(evt) {
+refs.formEl.addEventListener('submit', onMarcupImagesCard);
+function onMarcupImagesCard(evt) {
   evt.preventDefault();
   refs.cardEl.innerHTML = '';
   nomberPage = 1;
   const inputValue = refs.inputEl.value;
-  onFetchImages(inputValue, nomberPage);
+  refs.loadMoreEl.classList.add('is-hidden');
+  onFetchImages(inputValue, nomberPage).then(data =>
+    onCreateMarcup(data.hits, data.totalHits)
+  );
 }
-function onFetchImages(inputValue, nomberPage) {
-  axios({
-    method: 'get',
-    url: `${HREF_PIX}?key=${KEY_PIX}&q=${inputValue}&image_type=photo&orientation=horizontal&safesearch=true&page=${nomberPage}&per_page=40`,
-  }).then(data => onCreateImageCard(data.data.hits, data.data));
+async function onFetchImages(inputValue, nomberPage) {
+  const { data } = await axios.get(
+    `${HREF_PIX}?key=${KEY_PIX}&q=${inputValue}&image_type=photo&orientation=horizontal&safesearch=true&page=${nomberPage}&per_page=40`
+  );
+
+  return data;
 }
-function onCreateImageCard(images, data) {
+function onCreateMarcup(images, data) {
+  console.log(images);
   if (images.length === 0) {
     Notiflix.Notify.failure(
       'Sorry, there are no images matching your search query. Please try again.'
@@ -37,9 +42,9 @@ function onCreateImageCard(images, data) {
   } else {
     const createCard = images
       .map(
-        image => `<a href="${image.largeImageURL}"><div class="photo-card">
-      
-  <img src="${image.webformatURL}" alt="${image.tags}" loading="lazy" />
+        image => `<a href="${image.largeImageURL}" class="gallery__link"><div class="photo-card">
+
+  <img src="${image.webformatURL}" alt="${image.tags}" loading="lazy" class="gallery__image" />
   <div class="info">
     <p class="info-item">
       <b>Likes ${image.likes}</b>
@@ -59,33 +64,41 @@ function onCreateImageCard(images, data) {
       .join('');
     refs.cardEl.innerHTML += createCard;
     refs.loadMoreEl.classList.remove('is-hidden');
-    Notiflix.Notify.success(`Hooray! We found ${data.totalHits} images.`);
+    Notiflix.Notify.success(`Hooray! We found ${data} images.`);
   }
 }
 refs.loadMoreEl.addEventListener('click', onCreateMoreImages);
-function onCreateMoreImages(evt) {
+function onCreateMoreImages() {
   nomberPage += 1;
+  console.log(nomberPage);
   const inputValue = refs.inputEl.value;
-  onFetchMoreImages(inputValue, nomberPage);
+  onFetchMoreImages(inputValue, nomberPage).then(data =>
+    onCreateMoreImageCard(data.hits, data.totalHits, nomberPage)
+  );
 }
-function onFetchMoreImages(inputValue, nomberPage) {
-  axios({
-    method: 'get',
-    url: `${HREF_PIX}?key=${KEY_PIX}&q=${inputValue}&image_type=photo&orientation=horizontal&safesearch=true&page=${nomberPage}&per_page=40`,
-  }).then(data => onCreateMoreImageCard(data.data.hits, data.data));
+async function onFetchMoreImages(inputValue, nomberPage) {
+  const { data } = await axios.get(
+    `${HREF_PIX}?key=${KEY_PIX}&q=${inputValue}&image_type=photo&orientation=horizontal&safesearch=true&page=${nomberPage}&per_page=40`
+  );
+
+  return data;
 }
-function onCreateMoreImageCard(images, data) {
+function onCreateMoreImageCard(images, data, nomberPage) {
   if (images.length === 0) {
     Notiflix.Notify.failure(
       'Sorry, there are no images matching your search query. Please try again.'
     );
     refs.loadMoreEl.classList.add('is-hidden');
+  } else if (images.lengtsh * nomberPage > data) {
+    Notiflix.Notify.failure(
+      `We're sorry, but you've reached the end of search results.`
+    );
   } else {
     const createCard = images
       .map(
-        image => `<a href="${image.largeImageURL}"><div class="photo-card">
-      
-  <img src="${image.webformatURL}" alt="${image.tags}" loading="lazy" />
+        image => `<a href="${image.largeImageURL}" class="gallery__link"><div class="photo-card">
+
+  <img src="${image.webformatURL}" alt="${image.tags}" loading="lazy" class="gallery__image" />
   <div class="info">
     <p class="info-item">
       <b>Likes ${image.likes}</b>
