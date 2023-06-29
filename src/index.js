@@ -14,8 +14,11 @@ function onMarcupImagesCard(evt) {
   nomberPage = 1;
   const inputValue = refs.inputEl.value;
   refs.loadMoreEl.classList.add('is-hidden');
-  onFetchImages(inputValue, nomberPage).then(data =>
-    onCreateMarcup(data.hits, data.totalHits)
+  onFetchImages(inputValue, nomberPage).then(data => {
+    onCreateMarcup(data.hits, data.totalHits);
+    gallariBox.refresh()
+  }
+    
   );
 }
 
